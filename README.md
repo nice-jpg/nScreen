@@ -136,12 +136,23 @@ Build the Go gateway binary:
 python3 nScreen/shadow_root/webrtc_gateway/build_gateway.py
 ```
 
-For a Linux x86_64 remote server:
+Build and deploy to a remote Linux x86_64 server:
 
 ```bash
-GOOS=linux GOARCH=amd64 GOCACHE=/tmp/nScreen_gocache \
-go build -o /tmp/nScreen-webrtc-gateway-linux-amd64 \
-  ./nScreen/shadow_root/webrtc_gateway/cmd/nice-webrtc-gateway
+python3 nScreen/shadow_root/webrtc_gateway/build_gateway.py user@REMOTE_PUBLIC_IP
+```
+
+When a server is provided, the script cross-compiles the gateway for
+`linux/amd64`, uploads it to `nScreen/nice-webrtc-gateway` on the remote server,
+and restarts it with the standard ports. Override defaults as needed:
+
+```bash
+python3 nScreen/shadow_root/webrtc_gateway/build_gateway.py user@REMOTE_PUBLIC_IP \
+  --remote-path nScreen/nice-webrtc-gateway \
+  --listen-port 9080 \
+  --rtp-port 9181 \
+  --ice-udp-port-min 30000 \
+  --ice-udp-port-max 30010
 ```
 
 ## Runtime Commands

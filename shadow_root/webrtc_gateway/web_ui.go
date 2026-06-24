@@ -38,11 +38,9 @@ const indexHTML = `<!doctype html>
     const activePointers = new Set();
     const debugLines = [];
     const debugStorageKey = "nScreen_debug";
-    const gestureFlushTimeoutMs = 2500;
     let debugEnabled = params.get("debug") === "1" || params.get("debug") === "true" || localStorage.getItem(debugStorageKey) === "1";
     let flushScheduled = false;
     let flushing = false;
-    let flushTimer = 0;
     let peerConnection = null;
     let controlChannel = null;
     let wakeInFlight = false;
@@ -102,17 +100,42 @@ const indexHTML = `<!doctype html>
     }
 
     function payloadFromPoint(point, type, pointerId, timeStamp, pressure = 0.5) {
-      const rect = screenVideo.getBoundingClientRect();
+      const rect = videoContentRect();
       return {
         type,
         pointer_id: pointerId || 1,
-        x: point.clientX - rect.left,
-        y: point.clientY - rect.top,
+        x: clamp(point.clientX - rect.left, 0, rect.width),
+        y: clamp(point.clientY - rect.top, 0, rect.height),
         width: rect.width,
         height: rect.height,
         pressure,
         client_time_ms: timeStamp || performance.now()
       };
+    }
+
+    function videoContentRect() {
+      const rect = screenVideo.getBoundingClientRect();
+      const videoWidth = screenVideo.videoWidth || 0;
+      const videoHeight = screenVideo.videoHeight || 0;
+      if (!videoWidth || !videoHeight || !rect.width || !rect.height) return rect;
+      const videoAspect = videoWidth / videoHeight;
+      const elementAspect = rect.width / rect.height;
+      let width = rect.width;
+      let height = rect.height;
+      let left = rect.left;
+      let top = rect.top;
+      if (elementAspect > videoAspect) {
+        width = rect.height * videoAspect;
+        left = rect.left + (rect.width - width) / 2;
+      } else if (elementAspect < videoAspect) {
+        height = rect.width / videoAspect;
+        top = rect.top + (rect.height - height) / 2;
+      }
+      return {left, top, width, height};
+    }
+
+    function clamp(value, low, high) {
+      return Math.max(low, Math.min(high, value));
     }
 
     function pointerPayload(ev, type) {
@@ -147,26 +170,11 @@ const indexHTML = `<!doctype html>
     }
 
     function scheduleGestureFlush(gestureEnded = false) {
-      if (gestureEnded || activePointers.size === 0) {
-        clearFlushTimer();
+      if (gestureEnded) {
         scheduleFlush(true);
         return;
       }
-      scheduleFlushTimeout();
-    }
-
-    function scheduleFlushTimeout() {
-      if (flushTimer) return;
-      flushTimer = window.setTimeout(() => {
-        flushTimer = 0;
-        void flushEvents();
-      }, gestureFlushTimeoutMs);
-    }
-
-    function clearFlushTimer() {
-      if (!flushTimer) return;
-      window.clearTimeout(flushTimer);
-      flushTimer = 0;
+      scheduleFlush(false);
     }
 
     function scheduleFlush(immediate = false) {
