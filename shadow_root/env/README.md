@@ -10,8 +10,8 @@ in `local.env`; it is ignored by git.
 Lines use simple dotenv syntax:
 
 ```sh
-SHADOW_PORT=8080
-SHADOW_WEBRTC_TRANSPORT=tcp_direct
+SHADOW_WEBRTC_RTP_HOST=REMOTE_PUBLIC_IP
+SHADOW_WEBRTC_RTP_PORT=9181
 ```
 
 Blank lines and lines beginning with `#` are ignored.

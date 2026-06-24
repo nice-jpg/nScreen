@@ -111,12 +111,12 @@ final class DisplayMirror implements Closeable {
         try {
             Method method = displayManager.getMethod("createVirtualDisplay", String.class, int.class, int.class, int.class, Surface.class);
             System.err.println("nice_shadow_agent invoke " + displayManager.getName() + ".createVirtualDisplay mirror");
-            return (VirtualDisplay) method.invoke(null, "nice_auther_shadow", encodedSize.width, encodedSize.height, 0, surface);
+            return (VirtualDisplay) method.invoke(null, "nScreen_shadow", encodedSize.width, encodedSize.height, 0, surface);
         } catch (NoSuchMethodException mirrorMethodMissing) {
             Object displayManagerInstance = displayManager.getDeclaredConstructor().newInstance();
             Method method = displayManager.getMethod("createVirtualDisplay", String.class, int.class, int.class, int.class, Surface.class, int.class);
             System.err.println("nice_shadow_agent invoke " + displayManager.getName() + ".createVirtualDisplay public");
-            return (VirtualDisplay) method.invoke(displayManagerInstance, "nice_auther_shadow", encodedSize.width, encodedSize.height, 320, surface, 0);
+            return (VirtualDisplay) method.invoke(displayManagerInstance, "nScreen_shadow", encodedSize.width, encodedSize.height, 320, surface, 0);
         }
     }
 
@@ -141,10 +141,10 @@ final class DisplayMirror implements Closeable {
 
     private static Object createDisplayToken() throws Exception {
         try {
-            return invokeStaticByName("createDisplay", "nice_auther_shadow", true);
+            return invokeStaticByName("createDisplay", "nScreen_shadow", true);
         } catch (NoSuchMethodException first) {
             try {
-                return invokeStaticByName("createDisplay", "nice_auther_shadow", true, 0);
+                return invokeStaticByName("createDisplay", "nScreen_shadow", true, 0);
             } catch (NoSuchMethodException second) {
                 second.addSuppressed(first);
                 throw second;

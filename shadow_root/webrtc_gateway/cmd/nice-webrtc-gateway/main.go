@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	gateway "bines/nice_auther/shadow_root/webrtc_gateway"
+	gateway "bines/nScreen/shadow_root/webrtc_gateway"
 )
 
 func main() {
@@ -15,26 +15,18 @@ func main() {
 	icePublicIP := flag.String("ice-public-ip", "", "IP advertised in WebRTC ICE candidates")
 	iceUDPPortMin := flag.Int("ice-udp-port-min", 0, "minimum UDP port for WebRTC ICE")
 	iceUDPPortMax := flag.Int("ice-udp-port-max", 0, "maximum UDP port for WebRTC ICE")
-	transport := flag.String("transport", "adb_reverse_tcp", "Android-to-gateway media transport: adb_reverse_tcp, tcp_direct, or udp_rtp")
 	rtpListenHost := flag.String("rtp-listen-host", "0.0.0.0", "H.264 RTP listen host")
-	rtpPort := flag.Int("rtp-port", 9766, "H.264 RTP listen port")
-	agentControlPort := flag.Int("agent-control-port", 9767, "Android agent control port")
-	eventsURL := flag.String("events-url", "", "deprecated: browser controls are forwarded directly to the Android agent")
-	eventsToken := flag.String("events-token", "", "deprecated")
+	rtpPort := flag.Int("rtp-port", 9766, "H.264 RTP/control TCP listen port")
 	flag.Parse()
 
 	server := gateway.New(gateway.Config{
-		ListenHost:       *listenHost,
-		ListenPort:       *listenPort,
-		ICEPublicIP:      *icePublicIP,
-		ICEUDPPortMin:    *iceUDPPortMin,
-		ICEUDPPortMax:    *iceUDPPortMax,
-		Transport:        *transport,
-		RTPListenHost:    *rtpListenHost,
-		RTPPort:          *rtpPort,
-		AgentControlPort: *agentControlPort,
-		EventsURL:        *eventsURL,
-		EventsToken:      *eventsToken,
+		ListenHost:    *listenHost,
+		ListenPort:    *listenPort,
+		ICEPublicIP:   *icePublicIP,
+		ICEUDPPortMin: *iceUDPPortMin,
+		ICEUDPPortMax: *iceUDPPortMax,
+		RTPListenHost: *rtpListenHost,
+		RTPPort:       *rtpPort,
 	})
 	if err := server.StartMedia(); err != nil {
 		log.Fatal(err)

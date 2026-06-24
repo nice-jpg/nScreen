@@ -18,17 +18,13 @@ import (
 )
 
 type Config struct {
-	ListenHost       string
-	ListenPort       int
-	ICEPublicIP      string
-	ICEUDPPortMin    int
-	ICEUDPPortMax    int
-	Transport        string
-	RTPListenHost    string
-	RTPPort          int
-	AgentControlPort int
-	EventsURL        string
-	EventsToken      string
+	ListenHost    string
+	ListenPort    int
+	ICEPublicIP   string
+	ICEUDPPortMin int
+	ICEUDPPortMax int
+	RTPListenHost string
+	RTPPort       int
 }
 
 type SessionDescription struct {
@@ -43,14 +39,11 @@ type ErrorResponse struct {
 
 type Gateway struct {
 	Config      Config
-	Client      *http.Client
 	api         *webrtc.API
 	videoTrack  *webrtc.TrackLocalStaticRTP
-	rtpConn     net.PacketConn
 	tcpListener net.Listener
 	rtpOnce     sync.Once
 	rtpStartErr error
-	controlAddr *net.UDPAddr
 	controlMu   sync.Mutex
 	controlConn net.Conn
 }
@@ -59,14 +52,13 @@ func New(config Config) *Gateway {
 	api, track := newWebRTCAPIAndTrack(config)
 	return &Gateway{
 		Config:     config,
-		Client:     &http.Client{Timeout: 5 * time.Second},
 		api:        api,
 		videoTrack: track,
 	}
 }
 
 func (g *Gateway) Answer(offer SessionDescription) (SessionDescription, error) {
-	log.Printf("webrtc offer received transport=%s sdp_bytes=%d", g.Config.Transport, len(offer.SDP))
+	log.Printf("webrtc offer received transport=tcp_direct sdp_bytes=%d", len(offer.SDP))
 	if offer.Type != "offer" || offer.SDP == "" {
 		return SessionDescription{}, errors.New("offer sdp and type are required")
 	}
@@ -144,49 +136,22 @@ func (g *Gateway) ForwardAgentControl(payload []byte) error {
 
 func (g *Gateway) Close() error {
 	if g.tcpListener != nil {
-		_ = g.tcpListener.Close()
-	}
-	if g.rtpConn != nil {
-		return g.rtpConn.Close()
+		return g.tcpListener.Close()
 	}
 	return nil
 }
 
 func (g *Gateway) startRTPForwarder() error {
 	g.rtpOnce.Do(func() {
-		transport := g.Config.Transport
-		if transport == "" {
-			transport = "adb_reverse_tcp"
-		}
-		if g.Config.AgentControlPort > 0 {
-			g.controlAddr, _ = net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%d", g.Config.AgentControlPort))
-		}
-		if transport == "adb_reverse_tcp" || transport == "tcp_direct" {
-			g.rtpStartErr = g.startTCPForwarder()
-			return
-		}
-		rtpListenHost := g.Config.RTPListenHost
-		if rtpListenHost == "" {
-			rtpListenHost = g.Config.ListenHost
-		}
-		addr := fmt.Sprintf("%s:%d", rtpListenHost, g.Config.RTPPort)
-		g.rtpConn, g.rtpStartErr = net.ListenPacket("udp", addr)
-		if g.rtpStartErr != nil {
-			return
-		}
-		log.Printf("rtp udp listening addr=%s", addr)
-		go g.forwardRTP()
+		g.rtpStartErr = g.startTCPForwarder()
 	})
 	return g.rtpStartErr
 }
 
 func (g *Gateway) startTCPForwarder() error {
-	listenHost := "127.0.0.1"
-	if g.Config.Transport == "tcp_direct" {
-		listenHost = g.Config.RTPListenHost
-		if listenHost == "" {
-			listenHost = "0.0.0.0"
-		}
+	listenHost := g.Config.RTPListenHost
+	if listenHost == "" {
+		listenHost = "0.0.0.0"
 	}
 	addr := fmt.Sprintf("%s:%d", listenHost, g.Config.RTPPort)
 	listener, err := net.Listen("tcp", addr)
@@ -286,24 +251,6 @@ func hexPrefix(data []byte, limit int) string {
 	return string(out)
 }
 
-func (g *Gateway) forwardRTP() {
-	buf := make([]byte, 1600)
-	for {
-		n, _, err := g.rtpConn.ReadFrom(buf)
-		if err != nil {
-			return
-		}
-		var packet rtp.Packet
-		if err := packet.Unmarshal(buf[:n]); err != nil {
-			continue
-		}
-		if packet.SequenceNumber%300 == 0 {
-			log.Printf("rtp udp forwarded bytes=%d seq=%d timestamp=%d marker=%t", n, packet.SequenceNumber, packet.Timestamp, packet.Marker)
-		}
-		_ = g.videoTrack.WriteRTP(&packet)
-	}
-}
-
 func (g *Gateway) readRTCP(sender *webrtc.RTPSender) {
 	for {
 		packets, _, err := sender.ReadRTCP()
@@ -320,18 +267,7 @@ func (g *Gateway) readRTCP(sender *webrtc.RTPSender) {
 }
 
 func (g *Gateway) requestIDR() {
-	if err := g.ForwardAgentControl([]byte("PLI")); err == nil {
-		return
-	}
-	if g.controlAddr == nil {
-		return
-	}
-	conn, err := net.DialUDP("udp", nil, g.controlAddr)
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-	_, _ = conn.Write([]byte("PLI"))
+	_ = g.ForwardAgentControl([]byte("PLI"))
 }
 
 func newWebRTCAPIAndTrack(config Config) (*webrtc.API, *webrtc.TrackLocalStaticRTP) {
@@ -409,7 +345,7 @@ func (g *Gateway) ServeStatus(w http.ResponseWriter, r *http.Request) {
 		"recording": false,
 		"video": map[string]any{
 			"backend":   "webrtc_h264",
-			"transport": g.Config.Transport,
+			"transport": "tcp_direct",
 			"rtp_port":  g.Config.RTPPort,
 		},
 		"webrtc_gateway": map[string]any{

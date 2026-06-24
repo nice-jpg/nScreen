@@ -14,7 +14,7 @@ import (
 )
 
 func TestAnswerValidatesOffer(t *testing.T) {
-	gateway := New(Config{RTPPort: 9001, AgentControlPort: 9002})
+	gateway := New(Config{RTPPort: 9001})
 
 	_, err := gateway.Answer(SessionDescription{Type: "answer", SDP: ""})
 	if err == nil || !strings.Contains(err.Error(), "offer sdp and type are required") {

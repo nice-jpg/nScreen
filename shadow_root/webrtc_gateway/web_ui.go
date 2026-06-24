@@ -5,7 +5,7 @@ const indexHTML = `<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>nice_auther remote shadow</title>
+  <title>nScreen remote shadow</title>
   <style>
     html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
     body { margin: 0; font-family: system-ui, sans-serif; background: #111; color: #eee; touch-action: none; }
@@ -37,7 +37,7 @@ const indexHTML = `<!doctype html>
     const pendingEvents = [];
     const activePointers = new Set();
     const debugLines = [];
-    const debugStorageKey = "nice_auther_debug";
+    const debugStorageKey = "nScreen_debug";
     const gestureFlushTimeoutMs = 2500;
     let debugEnabled = params.get("debug") === "1" || params.get("debug") === "true" || localStorage.getItem(debugStorageKey) === "1";
     let flushScheduled = false;

@@ -1,4 +1,4 @@
-# nice_auther Android shadow agent
+# nScreen Android shadow agent
 
 This directory is the Android-side entry point for the `webrtc_h264` backend.
 The Python `shadow_root` process expects a built jar/dex artifact passed through
@@ -12,8 +12,8 @@ The agent contract is intentionally narrow:
 
 - capture the display with a scrcpy-style server path;
 - encode H.264 with Android `MediaCodec` hardware encoders;
-- send H.264 RTP to the gateway port provided by Python;
-- accept IDR/control messages on the configured control port.
+- send H.264 RTP to the remote gateway port provided by Python;
+- accept IDR/control messages on the same TCP connection.
 
 `build_android_agent.py` provides the stable build entry point and fails early
 with a clear error if `ANDROID_HOME` is not configured.

@@ -10,10 +10,7 @@ final class AgentConfig {
     final int iFrameIntervalMs;
     final String rtpHost;
     final int rtpPort;
-    final String transport;
-    final int controlPort;
     final int mtu;
-    final boolean selfTestRtp;
 
     private AgentConfig(
             int maxSize,
@@ -22,10 +19,7 @@ final class AgentConfig {
             int iFrameIntervalMs,
             String rtpHost,
             int rtpPort,
-            String transport,
-            int controlPort,
-            int mtu,
-            boolean selfTestRtp
+            int mtu
     ) {
         this.maxSize = maxSize;
         this.fps = fps;
@@ -33,20 +27,12 @@ final class AgentConfig {
         this.iFrameIntervalMs = iFrameIntervalMs;
         this.rtpHost = rtpHost;
         this.rtpPort = rtpPort;
-        this.transport = transport;
-        this.controlPort = controlPort;
         this.mtu = mtu;
-        this.selfTestRtp = selfTestRtp;
     }
 
     static AgentConfig parse(String[] args) {
         Map<String, String> values = new HashMap<>();
-        boolean selfTest = false;
         for (int i = 0; i < args.length; i++) {
-            if ("--self-test-rtp".equals(args[i])) {
-                selfTest = true;
-                continue;
-            }
             if (i + 1 < args.length) {
                 values.put(args[i], args[i + 1]);
                 i++;
@@ -59,10 +45,7 @@ final class AgentConfig {
                 intValue(values, "--i-frame-interval-ms", 1000),
                 values.getOrDefault("--rtp-host", "127.0.0.1"),
                 intValue(values, "--rtp-port", 0),
-                values.getOrDefault("--transport", "adb_reverse_tcp"),
-                intValue(values, "--control-port", 0),
-                intValue(values, "--mtu", 1200),
-                selfTest
+                intValue(values, "--mtu", 1200)
         );
         config.validate();
         return config;
@@ -88,14 +71,11 @@ final class AgentConfig {
     }
 
     private void validate() {
-        if (rtpPort <= 0 || controlPort <= 0) {
-            throw new IllegalArgumentException("rtp-port and control-port are required");
+        if (rtpPort <= 0) {
+            throw new IllegalArgumentException("rtp-port is required");
         }
         if (fps <= 0 || maxSize <= 0 || mtu < 256) {
             throw new IllegalArgumentException("max-size/fps/mtu are invalid");
-        }
-        if (!"adb_reverse_tcp".equals(transport) && !"tcp_direct".equals(transport) && !"udp_rtp".equals(transport)) {
-            throw new IllegalArgumentException("unsupported transport: " + transport);
         }
     }
 

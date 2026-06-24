@@ -17,7 +17,7 @@ def start_android_agent(config: ShadowConfig | None = None) -> None:
     log_event(
         "shadow_root.agent_runner",
         "start",
-        transport=effective_config.webrtc_transport,
+        transport="tcp_direct",
         rtp_host=effective_config.webrtc_rtp_host,
         rtp_port=effective_config.webrtc_rtp_port,
         gateway_host=effective_config.webrtc_gateway_host,

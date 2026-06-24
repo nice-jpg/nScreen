@@ -65,24 +65,19 @@ class AndroidShadowAgent:
         }
 
     def params(self) -> dict[str, Any]:
-        transport = self.config.webrtc_transport.strip().lower()
         return {
-            "transport": transport,
             "max_size": self.config.video_max_size,
             "fps": self.config.video_fps,
             "bitrate": self.config.video_bitrate,
             "i_frame_interval_ms": self.config.video_iframe_interval_ms,
-            "rtp_host": "127.0.0.1" if transport == "adb_reverse_tcp" else self.config.webrtc_rtp_host,
-            "rtp_port": self.config.webrtc_rtp_port or (self.config.port + 1001),
-            "control_port": self.config.webrtc_control_port or (self.config.port + 1002),
+            "rtp_host": self.config.webrtc_rtp_host,
+            "rtp_port": self.config.webrtc_rtp_port,
             "mtu": self.config.webrtc_rtp_mtu,
         }
 
     def agent_args(self) -> list[str]:
         params = self.params()
         args = [
-            "--transport",
-            str(params["transport"]),
             "--max-size",
             str(params["max_size"]),
             "--fps",
@@ -95,11 +90,7 @@ class AndroidShadowAgent:
             str(params["rtp_host"]),
             "--rtp-port",
             str(params["rtp_port"]),
-            "--control-port",
-            str(params["control_port"]),
             "--mtu",
             str(params["mtu"]),
         ]
-        if self.config.android_agent_self_test_rtp:
-            args.append("--self-test-rtp")
         return args

@@ -1,4 +1,4 @@
-"""Build the local nice_auther WebRTC gateway binary."""
+"""Build the nScreen WebRTC gateway binary."""
 
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ def main() -> int:
     output = root / "build" / "nice-webrtc-gateway"
     output.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
-    env.setdefault("GOCACHE", "/private/tmp/bines_gocache")
+    env.setdefault("GOCACHE", "/private/tmp/nscreen_gocache")
     subprocess.run(
         [
             "go",
             "build",
             "-o",
             str(output),
-            "./nice_auther/shadow_root/webrtc_gateway/cmd/nice-webrtc-gateway",
+            "./nScreen/shadow_root/webrtc_gateway/cmd/nice-webrtc-gateway",
         ],
         cwd=root.parents[2],
         env=env,
