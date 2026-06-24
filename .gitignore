@@ -1,0 +1,5 @@
+shadow_root/env/shadow_root.env
+
+*.pyc
+*.class
+build
