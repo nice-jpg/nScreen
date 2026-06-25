@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 
 
-GATEWAY_PACKAGE = "./nScreen/shadow_root/webrtc_gateway/cmd/nice-webrtc-gateway"
+GATEWAY_PACKAGE = "./cmd/nice-webrtc-gateway"
 
 
 @dataclass(frozen=True)
@@ -31,11 +31,10 @@ class DeployConfig:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     root = Path(__file__).resolve().parent
-    repo_root = root.parents[2]
     output = _build_output_path(root, deploy=bool(args.server), output=args.output)
 
     build_gateway(
-        repo_root,
+        root,
         output,
         goos="linux" if args.server else args.goos,
         goarch=args.goarch,
@@ -84,7 +83,7 @@ def _build_output_path(root: Path, *, deploy: bool, output: str | None) -> Path:
     return root / "build" / name
 
 
-def build_gateway(repo_root: Path, output: Path, *, goos: str, goarch: str) -> None:
+def build_gateway(module_root: Path, output: Path, *, goos: str, goarch: str) -> None:
     target = "/".join(part for part in [goos or os.environ.get("GOOS", "local"), goarch or os.environ.get("GOARCH", "")] if part)
     print(f"[build] target={target} output={output}")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -96,7 +95,7 @@ def build_gateway(repo_root: Path, output: Path, *, goos: str, goarch: str) -> N
         env["GOARCH"] = goarch
     subprocess.run(
         ["go", "build", "-o", str(output), GATEWAY_PACKAGE],
-        cwd=repo_root,
+        cwd=module_root,
         env=env,
         check=True,
     )

@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	gateway "bines/nScreen/shadow_root/webrtc_gateway"
+	gateway "nscreen/webrtc_gateway"
 )
 
 func main() {
