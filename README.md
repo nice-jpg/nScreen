@@ -258,14 +258,22 @@ Sends a wake request to the Android agent.
 - `AdbClient`
 - `AndroidShadowAgent`
 - `start_android_agent(config=None)`
+- `start_shadow_service(config=None)`
+- `stop_shadow_service()`
 
 Example:
 
 ```python
-from nScreen.shadow_root import ShadowConfig, start_android_agent
+from nScreen.shadow_root import ShadowConfig, start_shadow_service, stop_shadow_service
 
-start_android_agent(ShadowConfig.from_env())
+config = ShadowConfig.from_env()
+start_result = start_shadow_service(config)
+stop_result = stop_shadow_service()
 ```
+
+`start_shadow_service()` and `stop_shadow_service()` are non-blocking,
+same-process switches for the Android agent. `start_android_agent()` remains the
+blocking runner used by `python3 -m nScreen.shadow_root.run`.
 
 ## Go Gateway CLI
 

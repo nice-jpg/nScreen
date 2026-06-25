@@ -43,14 +43,18 @@ class AndroidShadowAgent:
     def stop(self) -> None:
         process = self.process
         self.process = None
-        if process is None:
-            return
         try:
-            log_event("shadow_root.android_agent", "stop", pid=getattr(process, "pid", None))
-            process.terminate()
-            process.wait(timeout=2)
-        except Exception:
-            process.kill()
+            log_event("shadow_root.android_agent", "kill stale", pattern=self.config.android_agent_main_class)
+            self.adb.kill_processes_matching(self.config.android_agent_main_class, root=True)
+        finally:
+            if process is None:
+                return
+            try:
+                log_event("shadow_root.android_agent", "stop", pid=getattr(process, "pid", None))
+                process.terminate()
+                process.wait(timeout=2)
+            except Exception:
+                process.kill()
 
     def status(self) -> dict[str, Any]:
         process = self.process
